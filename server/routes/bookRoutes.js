@@ -7,6 +7,7 @@ const {
     getBooks,
     searchBooks,
     getBookById,
+    getUserBooks,
     updateBook,
     deleteBook
 } = require("../controllers/bookController");
@@ -16,6 +17,8 @@ router.post("/add", addBook);
 router.get("/all", getBooks);
 
 router.get("/search", searchBooks);
+
+router.get("/user/:userId", getUserBooks);
 
 router.get("/:id", getBookById);
 

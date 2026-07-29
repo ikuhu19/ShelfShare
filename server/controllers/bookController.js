@@ -137,6 +137,35 @@ const getBookById = (req, res) => {
 
 };
 
+const getUserBooks = (req, res) => {
+
+    const { userId } = req.params;
+
+    const sql = `
+        SELECT *
+        FROM books
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    `;
+
+    db.query(sql, [userId], (err, result) => {
+
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                message: err.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            books: result
+        });
+
+    });
+
+};
+
 // Update Book
 const updateBook = (req, res) => {
 
@@ -225,6 +254,7 @@ module.exports = {
     getBooks,
     searchBooks,
     getBookById,
+    getUserBooks,
     updateBook,
     deleteBook
 };

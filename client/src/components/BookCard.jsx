@@ -1,4 +1,42 @@
+import API from "../api/api";
+
 function BookCard({ book }) {
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const handleRequest = async () => {
+
+    if (!user) {
+      alert("Please login first");
+      return;
+    }
+
+    if (user.id === book.user_id) {
+      alert("You cannot request your own book.");
+      return;
+    }
+
+    try {
+
+      const response = await API.post("/requests/send", {
+        book_id: book.id,
+        requester_id: user.id
+      });
+
+      alert(response.data.message);
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert(
+        error.response?.data?.message ||
+        "Failed to send request"
+      );
+
+    }
+
+  };
 
   return (
 
@@ -6,26 +44,19 @@ function BookCard({ book }) {
 
       <h2>{book.title}</h2>
 
-      <p>
-        Author: {book.author}
-      </p>
+      <p><strong>Author:</strong> {book.author}</p>
 
-      <p>
-        Category: {book.category}
-      </p>
+      <p><strong>Category:</strong> {book.category}</p>
 
-      <p>
-        Condition: {book.book_condition}
-      </p>
+      <p><strong>Condition:</strong> {book.book_condition}</p>
 
-      <p>
-        Owner: {book.owner}
-      </p>
+      <p><strong>Owner:</strong> {book.owner}</p>
 
-
-      <button>
-        Request Book
-      </button>
+      {user && user.id !== book.user_id && (
+        <button onClick={handleRequest}>
+          Request Book 📚
+        </button>
+      )}
 
     </div>
 
