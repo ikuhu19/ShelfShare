@@ -12,6 +12,17 @@ const addBook = (req, res) => {
         image
     } = req.body;
 
+    if (!user_id || !title || !author || !category) {
+        return res.status(400).json({
+            success: false,
+            message: "Please fill all required fields: title, author, and category."
+        });
+    }
+
+    // Default book_condition to 'Good' if invalid or missing to comply with enum('New','Good','Fair')
+    const validConditions = ["New", "Good", "Fair"];
+    const condition = validConditions.includes(book_condition) ? book_condition : "Good";
+
     const sql = `
         INSERT INTO books
         (user_id, title, author, category, book_condition, description, image)
@@ -20,8 +31,8 @@ const addBook = (req, res) => {
 
     db.query(
         sql,
-        [user_id, title, author, category, book_condition, description, image],
-        (err) => {
+        [user_id, title, author, category, condition, description || "", image || ""],
+        (err, result) => {
             if (err) {
                 return res.status(500).json({
                     success: false,
@@ -31,7 +42,8 @@ const addBook = (req, res) => {
 
             res.status(201).json({
                 success: true,
-                message: "Book Added Successfully"
+                message: "Book Added Successfully",
+                bookId: result.insertId
             });
         }
     );
@@ -39,16 +51,14 @@ const addBook = (req, res) => {
 
 // Get All Books
 const getBooks = (req, res) => {
-
     const sql = `
-        SELECT books.*, users.name AS owner
+        SELECT books.*, users.name AS owner, users.college AS owner_college
         FROM books
         JOIN users ON books.user_id = users.id
         ORDER BY books.created_at DESC
     `;
 
     db.query(sql, (err, result) => {
-
         if (err) {
             return res.status(500).json({
                 success: false,
@@ -60,30 +70,35 @@ const getBooks = (req, res) => {
             success: true,
             books: result
         });
-
     });
-
 };
 
-// Search Books
+// Search & Filter Books
 const searchBooks = (req, res) => {
+    const { keyword, category } = req.query;
 
-    const { keyword } = req.query;
-
-    const search = `%${keyword}%`;
-
-    const sql = `
-        SELECT books.*, users.name AS owner
+    let sql = `
+        SELECT books.*, users.name AS owner, users.college AS owner_college
         FROM books
         JOIN users ON books.user_id = users.id
-        WHERE
-        books.title LIKE ?
-        OR books.author LIKE ?
-        OR books.category LIKE ?
+        WHERE 1=1
     `;
+    const params = [];
 
-    db.query(sql, [search, search, search], (err, result) => {
+    if (keyword && keyword.trim() !== "") {
+        const search = `%${keyword.trim()}%`;
+        sql += ` AND (books.title LIKE ? OR books.author LIKE ? OR books.category LIKE ?)`;
+        params.push(search, search, search);
+    }
 
+    if (category && category.trim() !== "" && category !== "All") {
+        sql += ` AND books.category = ?`;
+        params.push(category.trim());
+    }
+
+    sql += ` ORDER BY books.created_at DESC`;
+
+    db.query(sql, params, (err, result) => {
         if (err) {
             return res.status(500).json({
                 success: false,
@@ -95,25 +110,21 @@ const searchBooks = (req, res) => {
             success: true,
             books: result
         });
-
     });
-
 };
 
 // Get Single Book
 const getBookById = (req, res) => {
-
     const { id } = req.params;
 
     const sql = `
-        SELECT books.*, users.name AS owner
+        SELECT books.*, users.name AS owner, users.email AS owner_email, users.phone AS owner_phone, users.college AS owner_college
         FROM books
         JOIN users ON books.user_id = users.id
         WHERE books.id = ?
     `;
 
     db.query(sql, [id], (err, result) => {
-
         if (err) {
             return res.status(500).json({
                 success: false,
@@ -132,13 +143,11 @@ const getBookById = (req, res) => {
             success: true,
             book: result[0]
         });
-
     });
-
 };
 
+// Get Books Added by Specific User
 const getUserBooks = (req, res) => {
-
     const { userId } = req.params;
 
     const sql = `
@@ -149,7 +158,6 @@ const getUserBooks = (req, res) => {
     `;
 
     db.query(sql, [userId], (err, result) => {
-
         if (err) {
             return res.status(500).json({
                 success: false,
@@ -161,14 +169,11 @@ const getUserBooks = (req, res) => {
             success: true,
             books: result
         });
-
     });
-
 };
 
 // Update Book
 const updateBook = (req, res) => {
-
     const { id } = req.params;
 
     const {
@@ -179,6 +184,9 @@ const updateBook = (req, res) => {
         description,
         image
     } = req.body;
+
+    const validConditions = ["New", "Good", "Fair"];
+    const condition = validConditions.includes(book_condition) ? book_condition : "Good";
 
     const sql = `
         UPDATE books
@@ -198,13 +206,12 @@ const updateBook = (req, res) => {
             title,
             author,
             category,
-            book_condition,
-            description,
-            image,
+            condition,
+            description || "",
+            image || "",
             id
         ],
         (err) => {
-
             if (err) {
                 return res.status(500).json({
                     success: false,
@@ -216,22 +223,18 @@ const updateBook = (req, res) => {
                 success: true,
                 message: "Book Updated Successfully"
             });
-
         }
     );
-
 };
 
 // Delete Book
 const deleteBook = (req, res) => {
-
     const { id } = req.params;
 
     db.query(
         "DELETE FROM books WHERE id=?",
         [id],
         (err) => {
-
             if (err) {
                 return res.status(500).json({
                     success: false,
@@ -243,10 +246,8 @@ const deleteBook = (req, res) => {
                 success: true,
                 message: "Book Deleted Successfully"
             });
-
         }
     );
-
 };
 
 module.exports = {

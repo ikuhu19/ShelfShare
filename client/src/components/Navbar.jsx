@@ -1,68 +1,91 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 
 function Navbar() {
-
   const navigate = useNavigate();
-
-  const user = JSON.parse(localStorage.getItem("user"));
+  const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-
-    localStorage.removeItem("user");
-
+    logout();
     alert("Logged out successfully");
-
     navigate("/login");
-
   };
 
+  const closeMenu = () => setMobileMenuOpen(false);
+
   return (
+    <header className="site-navbar">
+      <div className="navbar-container">
+        <Link to="/" className="navbar-brand" onClick={closeMenu}>
+          <span className="brand-icon">📚</span>
+          <span className="brand-text">ShelfShare</span>
+        </Link>
 
-    <nav>
+        <button
+          className="mobile-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {mobileMenuOpen ? "✕" : "☰"}
+        </button>
 
-      <h2>ShelfShare 📚</h2>
+        <nav className={`nav-links ${mobileMenuOpen ? "open" : ""}`}>
+          <NavLink to="/" end onClick={closeMenu} className={({ isActive }) => (isActive ? "active-link" : "")}>
+            Home
+          </NavLink>
 
-      <div>
+          <NavLink to="/books" onClick={closeMenu} className={({ isActive }) => (isActive ? "active-link" : "")}>
+            Explore Books
+          </NavLink>
 
-        <Link to="/">Home</Link>
+          {user ? (
+            <>
+              <NavLink to="/add-book" onClick={closeMenu} className={({ isActive }) => (isActive ? "active-link" : "")}>
+                + Share Book
+              </NavLink>
 
-        <Link to="/books">Books</Link>
+              <NavLink to="/my-books" onClick={closeMenu} className={({ isActive }) => (isActive ? "active-link" : "")}>
+                My Books
+              </NavLink>
 
-        {user ? (
+              <NavLink to="/requests" onClick={closeMenu} className={({ isActive }) => (isActive ? "active-link" : "")}>
+                Requests
+              </NavLink>
 
-          <>
+              <NavLink to="/dashboard" onClick={closeMenu} className={({ isActive }) => (isActive ? "active-link" : "")}>
+                Dashboard
+              </NavLink>
 
-            <span>Hi, {user.name} 👋</span>
-
-            <Link to="/add-book">Add Book</Link>
-
-            <button onClick={handleLogout}>
-              Logout
-            </button>
-
-          </>
-
-        ) : (
-
-          <>
-
-          <Link to="/requests">Requests</Link>
-
-            <Link to="/login">Login</Link>
-
-            <Link to="/register">Register</Link>
-
-          </>
-
-        )}
-
-
+              <div className="user-profile-pill">
+                <span className="user-avatar-badge">👤</span>
+                <span className="user-greeting">{user.name}</span>
+                <button
+                  onClick={() => {
+                    closeMenu();
+                    handleLogout();
+                  }}
+                  className="nav-logout-btn"
+                >
+                  Logout
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="nav-auth-buttons">
+              <Link to="/login" onClick={closeMenu} className="login-link">
+                Login
+              </Link>
+              <Link to="/register" onClick={closeMenu} className="register-cta">
+                Sign Up
+              </Link>
+            </div>
+          )}
+        </nav>
       </div>
-
-    </nav>
-
+    </header>
   );
-
 }
 
 export default Navbar;
