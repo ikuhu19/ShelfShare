@@ -1,0 +1,12 @@
+{
+  "appId": "com.shelfshare.app",
+  "appName": "ShelfShare",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#FAF7F2",
+    "allowMixedContent": true
+  }
+}

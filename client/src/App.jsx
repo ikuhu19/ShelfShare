@@ -4,6 +4,8 @@ import { useAuth } from "./context/useAuth";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import NetworkStatus from "./components/NetworkStatus";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -24,6 +26,7 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   return (
     <div className="app-shell">
+      <NetworkStatus />
       <Navbar />
       <main className="main-content">
         <Routes>
@@ -82,6 +85,7 @@ function AppRoutes() {
         </Routes>
       </main>
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 }
